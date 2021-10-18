@@ -2,6 +2,7 @@ import datetime
 import time
 
 import tensorflow as tf
+from keras.utils.np_utils import to_categorical
 
 from src.config import GANConfig
 from src.losses import GANLoss
@@ -40,12 +41,26 @@ class TrainGAN:
             # password = tf.strings.unicode_decode(password, input_encoding='UTF-8')
             # passwords = tf.cast(passwords, tf.int64)
             for _ in range(GANConfig.DISC_ITERATIONS_PER_GEN_ITERATIONS):
-                embedding = "https://tfhub.dev/google/nnlm-en-dim50/2"
-                hub_layer = hub.KerasLayer(embedding, input_shape=[GANConfig.BACH_SIZE],
-                                           dtype=tf.string, trainable=True)
-                passwords = hub_layer(passwords)
+                # embedding = "https://tfhub.dev/google/nnlm-en-dim50/2"
+                # hub_layer = hub.KerasLayer(embedding, input_shape=[GANConfig.BACH_SIZE],
+                #                            dtype=tf.string, trainable=True)
+                # passwords = hub_layer(passwords)
 
-                real_input = tf.reshape(passwords, [2, 1, 32])
+                padded_passwords = []
+                charset = set(" ")  # start with the initial padding char
+                for p in passwords:
+                    padded_passwords.append(p.numpy().decode('utf-8').ljust(GANConfig.OUTPUT_SEQ_LENGTH, " "))
+                    charset |= set(p.numpy().decode('utf-8'))  # |= is the union set operation.
+
+                # Convert characters to integers
+                vocab_size = len(charset)
+                char2id = dict((c, i) for i, c in enumerate(charset))
+
+                # One hot encode the passwords
+                encoded_passwords = [[char2id[c] for c in password] for password in padded_passwords]
+                one_hot_encoded = [tf.constant(to_categorical(p, num_classes=vocab_size)) for p in encoded_passwords]
+
+                real_input = tf.reshape(one_hot_encoded, [2, 1, 32])
                 real_output = self.discriminator.call(input_data=real_input)
 
             generated_passwords = self.generator.call(input_noise=z)
