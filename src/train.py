@@ -21,6 +21,7 @@ class TrainGAN:
         self.gan_opt = GANOpt()
         self.generator_opt: tf.keras.optimizers.Adam = self.gan_opt.get_generator_opt()
         self.discriminator_opt: tf.keras.optimizers.Adam = self.gan_opt.get_generator_opt()
+        self.vocab_size = None
 
     # @tf.function
     def train_step(self, passwords):
@@ -53,12 +54,17 @@ class TrainGAN:
                     charset |= set(p.numpy().decode('utf-8'))  # |= is the union set operation.
 
                 # Convert characters to integers
-                vocab_size = len(charset)
+                self.vocab_size = len(charset)
                 char2id = dict((c, i) for i, c in enumerate(charset))
 
                 # One hot encode the passwords
                 encoded_passwords = [[char2id[c] for c in password] for password in padded_passwords]
-                one_hot_encoded = [tf.constant(to_categorical(p, num_classes=vocab_size)) for p in encoded_passwords]
+                one_hot_encoded = [tf.constant(to_categorical(p, num_classes=self.vocab_size)) for p in encoded_passwords]
+
+                # resh = tf.reshape(one_hot_encoded[0], [10 * self.vocab_size])
+                #Tensor("one_hot:0", shape=(64, 10, 51), dtype=float32)
+                real_inputs_discrete = tf.compat.v1.placeholder(tf.int32, shape=[GANConfig.BACH_SIZE, GANConfig.OUTPUT_SEQ_LENGTH])
+                tf.one_hot(real_inputs_discrete, self.vocab_size)
 
                 real_input = tf.reshape(one_hot_encoded, [2, 1, 32])
                 real_output = self.discriminator.call(input_data=real_input)
