@@ -98,7 +98,7 @@ class TrainGAN:
             disc_loss_list = []
 
             for batch in dataset:
-                t = self.train_step(batch['password'])
+                t = self.train_step(batch)
                 gen_loss_list.append(t[0])
                 disc_loss_list.append(t[1])
 
