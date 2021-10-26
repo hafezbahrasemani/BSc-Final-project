@@ -2,6 +2,7 @@ import datetime
 import time
 
 import tensorflow as tf
+from keras.layers import TextVectorization
 from keras.utils.np_utils import to_categorical
 
 from src.config import GANConfig
@@ -57,6 +58,19 @@ class TrainGAN:
                 self.vocab_size = len(charset)
                 char2id = dict((c, i) for i, c in enumerate(charset))
 
+                vectorization_layer = tf.keras.layers.TextVectorization(
+                    max_tokens=5000,
+                    output_mode='int',
+                    output_sequence_length=GANConfig.OUTPUT_SEQ_LENGTH,
+                    vocabulary=padded_passwords
+                )
+
+                # vectorization_layer.adapt(padded_passwords)
+                model = tf.keras.models.Sequential()
+
+                model.add(tf.keras.Input(shape=(1,), dtype=tf.string))
+                model.add(vectorization_layer)
+                output = model.predict(padded_passwords)
                 # One hot encode the passwords
                 encoded_passwords = [[char2id[c] for c in password] for password in padded_passwords]
                 one_hot_encoded = [tf.constant(to_categorical(p, num_classes=self.vocab_size)) for p in encoded_passwords]
@@ -98,7 +112,7 @@ class TrainGAN:
             disc_loss_list = []
 
             for batch in dataset:
-                t = self.train_step(batch)
+                t = self.train_step(batch['password'])
                 gen_loss_list.append(t[0])
                 disc_loss_list.append(t[1])
 
@@ -121,3 +135,15 @@ class TrainGAN:
     def save_generated_passwords(self, epoch, seed):
             pass
 
+    def preprocess_dataset(self, max_features):
+        vectorized_layer = TextVectorization(
+            standardize='custom_standardization',
+            max_tokens=max_features,
+            # split=char_split,  # word_split or char_split
+            output_mode="int",
+            output_sequence_length=GANConfig.OUTPUT_SEQ_LENGTH,
+        )
+
+        def vectorized_text(text) -> object:
+            text = tf.expand_dims(text, -1)
+            return tf.squeeze(vectorized_layer(text))
