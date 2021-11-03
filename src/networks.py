@@ -30,7 +30,7 @@ class GeneratorNetwork(tf.keras.Model):
         self.generator_res_block_model = tf.keras.models.Sequential()
 
         # first linear layer
-        self.first_linear_layer = tf.keras.layers.Dense(128, activation='linear')
+        self.first_linear_layer = tf.keras.layers.Dense(dim, activation='linear', input_shape=(dim*pass_length, ))
 
         # residual blocks in a sequential order
         self.generator_res_block_model.add(ResidualBlock(dim=dim))
@@ -43,7 +43,7 @@ class GeneratorNetwork(tf.keras.Model):
         """
         
         """
-        self.conv_1d_layer = tf.keras.layers.Conv1D(filters=self.dim, kernel_size=self.pass_length, padding='valid')
+        self.conv_1d_layer = tf.keras.layers.Conv1D(self.dim, 1, padding='valid')
 
         # last soft max layer
         self.softmax_layer = tf.keras.layers.Softmax(axis=1)
@@ -74,7 +74,7 @@ class GeneratorNetwork(tf.keras.Model):
 
         # feed softmax layer with transposed output
         output = self.softmax_layer(output)
-        output = tf.reshape(output, [2, 1, 32])
+        # output = tf.reshape(output, [2, 1, 32])
 
         return output
 
@@ -87,17 +87,18 @@ class DiscriminatorNetwork(tf.keras.Model):
         self.pass_length = pass_length
 
         self.block = tf.keras.Sequential([
-            ResidualBlock(dim=5),
-            ResidualBlock(dim=5),
-            ResidualBlock(dim=5),
-            ResidualBlock(dim=5),
-            ResidualBlock(dim=5),
+            ResidualBlock(dim=dim),
+            ResidualBlock(dim=dim),
+            ResidualBlock(dim=dim),
+            ResidualBlock(dim=dim),
+            ResidualBlock(dim=dim),
         ])
-        self.conv1d = tf.keras.layers.Conv1D(dim, 32, 1, padding='valid')
-        self.linear = tf.keras.layers.Dense(pass_length * dim, activation='linear')
+        self.conv1d = tf.keras.layers.Conv1D(dim, 1, padding='valid')
+        self.linear = tf.keras.layers.Dense(dim, activation='linear', input_shape=(dim*pass_length, ))
 
     def call(self, input_data, **kwargs):
-        output = tf.transpose(input_data, [0, 2, 1])
+        output = tf.transpose(input_data)
+        # , [0, 2, 1]
         output = self.conv1d(output)
         output = self.block(output)
         output = tf.reshape(output, (-1, 64, 4))
