@@ -1,4 +1,5 @@
 import datetime
+import string
 import time
 
 import tensorflow as tf
@@ -9,6 +10,7 @@ from src.config import GANConfig
 from src.losses import GANLoss
 from src.networks import GeneratorNetwork, DiscriminatorNetwork
 from src.optimizer import GANOpt
+import numpy as np
 
 
 class TrainGAN:
@@ -32,34 +34,36 @@ class TrainGAN:
         """
         # generates a new set of random values every time:
         tf.random.set_seed(5)
-
-        z = tf.random.normal([GANConfig.NOISE_INPUT_SIZE, 1, self.generator.pass_length], 0, 1)  # noise input for generator
+        z = tf.constant(tf.random.normal([GANConfig.NOISE_INPUT_SIZE, 1, self.generator.pass_length], dtype=tf.dtypes.float32))
+        # z = tf.random.normal([GANConfig.NOISE_INPUT_SIZE, 1, self.generator.pass_length], 0, 1)  # noise input for generator
         #   seed = tf.random.normal([BATCH_SIZE, SEED_SIZE])
 
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
-            # password = tf.strings.unicode_decode(password, input_encoding='UTF-8')
-            # passwords = tf.cast(passwords, tf.int64)
+            # passwords = tf.strings.unicode_decode(passwords, input_encoding='UTF-8')
             for _ in range(GANConfig.DISC_ITERATIONS_PER_GEN_ITERATIONS):
                 padded_passwords = []
                 vocabulary = set(" ")  # start with the initial padding char
-                for p in passwords:
-                    current_p = p.numpy().decode('utf-8')
-                    if len(current_p) < GANConfig.OUTPUT_SEQ_LENGTH:
-                        padded_passwords.append(current_p.ljust(GANConfig.OUTPUT_SEQ_LENGTH))
-                        vocabulary |= set(current_p)  # |= is the union set operation.
-
-                # Convert characters to integers
-                self.vocab_size = len(vocabulary)
+                # for p in passwords:
+                #     current_p = p.numpy().decode('utf-8')
+                    # if len(current_p) <= GANConfig.OUTPUT_SEQ_LENGTH:
+                    #     padded_passwords.append(current_p.ljust(GANConfig.OUTPUT_SEQ_LENGTH))
+                        # vocabulary |= set(current_p)  # |= is the union set operation.
+                vocabulary = [char for char in string.printable]
+                vocabulary.append('<unk>')
+                self.vocab_size = 128
                 char2id = dict((c, i) for i, c in enumerate(vocabulary))
-                encoded_passwords = [[char2id[c] for c in password] for password in padded_passwords]
-                one_hot_encoded = [tf.constant(to_categorical(p, num_classes=self.vocab_size)) for p in encoded_passwords]
 
-                # real_input = tf.reshape(one_hot_encoded, [2, 1, 32])
-                # real_output = self.discriminator.call(input_data=real_input)
+                # set unknown chars to <unk> character with index 100
+                encoded_passwords = [[char2id.get(c) if char2id.get(c) else 100 for c in password.decode('utf-8')] for password in passwords.numpy()]
+                one_hot_encoded = [tf.constant(to_categorical(p, num_classes=self.vocab_size)) for p in encoded_passwords]
+                numpy_one_hot = np.array(one_hot_encoded)
+
+                # real_input = tf.reshape(numpy_one_hot, [2, 1, 32])
+                real_output = self.discriminator.call(input_data=numpy_one_hot)
 
             generated_passwords = self.generator.call(input_noise=z)
-
-            fake_output = self.discriminator.call(input_data=generated_passwords)
+            generated = tf.reshape(generated_passwords, [-1, 2, 128])
+            fake_output = self.discriminator.call(input_data=generated)
 
             gen_loss = self.gan_loss.generator_loss(fake_output)
             disc_loss = self.gan_loss.discriminator_loss(real_output, fake_output)
@@ -79,6 +83,18 @@ class TrainGAN:
         # tf.compat.v1.disable_eager_execution()
 
         start = time.time()
+        vocabulary = self._get_vocabulary()
+
+        def generate_samples():
+            samples = session.run(fake_inputs)
+            samples = np.argmax(samples, axis=2)
+            decoded_samples = []
+            for i in xrange(len(samples)):
+                decoded = []
+                for j in range(len(samples[i])):
+                    decoded.append(vocabulary[samples[i][j]])
+                decoded_samples.append(tuple(decoded))
+            return decoded_samples
 
         for epoch in range(epochs):
             epoch_start = time.time()
@@ -87,7 +103,7 @@ class TrainGAN:
             disc_loss_list = []
 
             for batch in dataset:
-                t = self.train_step(batch['password'])
+                t = self.train_step(batch)
                 gen_loss_list.append(t[0])
                 disc_loss_list.append(t[1])
 
@@ -106,6 +122,12 @@ class TrainGAN:
         m = int((sec_elapsed % (60 * 60)) / 60)
         s = sec_elapsed % 60
         return "{}:{:>02}:{:>05.2f}".format(h, m, s)
+
+    def _get_vocabulary(self):
+        vocabulary = [char for char in string.printable]
+        vocabulary.append('<unk>')
+        char2id = dict((c, i) for i, c in enumerate(vocabulary))
+        return char2id
 
     def save_generated_passwords(self, epoch, seed):
             pass
