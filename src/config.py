@@ -11,7 +11,7 @@ class GANConfig:
     OUTPUT_SEQ_LENGTH = 10
     DISC_ITERATIONS_PER_GEN_ITERATIONS = 10  # How many discriminator iterations per generator iteration
 
-    INITIAL_TRAIN_SIZE = 1000  # Train size for starting training in local environment
+    INITIAL_TRAIN_SIZE = 500  # Train size for starting training in local environment
     INITIAL_TRAINING = True  # specify loading initial training or 2.5M passwords for actual training
 
     # Adam Optimizer"s hyper-parameters

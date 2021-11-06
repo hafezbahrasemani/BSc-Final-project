@@ -76,25 +76,30 @@ class TrainGAN:
             self.discriminator_opt.apply_gradients(zip(
                 gradients_of_discriminator,
                 self.discriminator.trainable_variables))
+
+            self.generator.summary()
+            self.discriminator.summary()
         return gen_loss, disc_loss
 
     def train(self, dataset, epochs):
+        self.generator.build(input_shape=[])
+        self.discriminator.build(input_shape=[])
         # fixed_seed = tf.random.normal(0, 1, (1, 32), dtype=tf.dtypes.float32)  # noise input for generator
         # tf.compat.v1.disable_eager_execution()
 
         start = time.time()
         vocabulary = self._get_vocabulary()
 
-        def generate_samples():
-            samples = session.run(fake_inputs)
-            samples = np.argmax(samples, axis=2)
-            decoded_samples = []
-            for i in xrange(len(samples)):
-                decoded = []
-                for j in range(len(samples[i])):
-                    decoded.append(vocabulary[samples[i][j]])
-                decoded_samples.append(tuple(decoded))
-            return decoded_samples
+        # def generate_samples():
+        #     samples = session.run(fake_inputs)
+        #     samples = np.argmax(samples, axis=2)
+        #     decoded_samples = []
+        #     for i in xrange(len(samples)):
+        #         decoded = []
+        #         for j in range(len(samples[i])):
+        #             decoded.append(vocabulary[samples[i][j]])
+        #         decoded_samples.append(tuple(decoded))
+        #     return decoded_samples
 
         for epoch in range(epochs):
             epoch_start = time.time()
@@ -128,6 +133,9 @@ class TrainGAN:
         vocabulary.append('<unk>')
         char2id = dict((c, i) for i, c in enumerate(vocabulary))
         return char2id
+
+    def _generated_passwords_float_vector_to_string_list(self, generated_passwords):
+        pass
 
     def save_generated_passwords(self, epoch, seed):
             pass
