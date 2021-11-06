@@ -21,7 +21,7 @@ class ResidualBlock(tf.keras.Model):
 
 class GeneratorNetwork(tf.keras.Model):
     def __init__(self, dim, pass_length):
-        super().__init__()
+        super(GeneratorNetwork, self).__init__()
 
         self.dim = dim
         self.pass_length = pass_length
@@ -30,7 +30,7 @@ class GeneratorNetwork(tf.keras.Model):
         self.generator_res_block_model = tf.keras.models.Sequential()
 
         # first linear layer
-        self.first_linear_layer = tf.keras.layers.Dense(dim, activation='linear', input_shape=(dim*pass_length, ))
+        self.first_linear_layer = tf.keras.layers.Dense(dim, activation='linear', input_shape=[dim*pass_length, ])
 
         # residual blocks in a sequential order
         self.generator_res_block_model.add(ResidualBlock(dim=dim))
@@ -43,7 +43,7 @@ class GeneratorNetwork(tf.keras.Model):
         """
         
         """
-        self.conv_1d_layer = tf.keras.layers.Conv1D(self.dim, 1, padding='valid')
+        self.conv_1d_layer = tf.keras.layers.Conv1D(dim, 1, padding='valid')
 
         # last soft max layer
         self.softmax_layer = tf.keras.layers.Softmax(axis=1)
@@ -60,7 +60,7 @@ class GeneratorNetwork(tf.keras.Model):
         output = self.first_linear_layer(input_noise)
 
         # reshape the result of linear layer
-        output = tf.reshape(output, [-1, 2, 128])
+        output = tf.reshape(output, [-1, 2, self.dim])
 
         # feed residual blocks by output from reshape stage
         output = self.generator_res_block_model(output)
@@ -81,8 +81,7 @@ class GeneratorNetwork(tf.keras.Model):
 
 class DiscriminatorNetwork(tf.keras.Model):
     def __init__(self, dim, pass_length):
-        super().__init__()
-
+        super(DiscriminatorNetwork, self).__init__()
         self.dim = dim
         self.pass_length = pass_length
 

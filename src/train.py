@@ -34,7 +34,7 @@ class TrainGAN:
         """
         # generates a new set of random values every time:
         tf.random.set_seed(5)
-        z = tf.constant(tf.random.normal([GANConfig.NOISE_INPUT_SIZE, 1, self.generator.pass_length], dtype=tf.dtypes.float32))
+        z = tf.constant(tf.random.normal([GANConfig.NOISE_INPUT_SIZE, 1, GANConfig.OUTPUT_SEQ_LENGTH], dtype=tf.dtypes.float32))
         # z = tf.random.normal([GANConfig.NOISE_INPUT_SIZE, 1, self.generator.pass_length], 0, 1)  # noise input for generator
         #   seed = tf.random.normal([BATCH_SIZE, SEED_SIZE])
 
@@ -62,6 +62,10 @@ class TrainGAN:
                 real_output = self.discriminator.call(input_data=numpy_one_hot)
 
             generated_passwords = self.generator.call(input_noise=z)
+            generated_argmax = np.argmax(generated_passwords, axis=1)
+            # convert generated passwords vector to password strings, then save them to a text file
+            self._generated_passwords_float_vector_to_string_list(generated_passwords=generated_passwords)
+
             generated = tf.reshape(generated_passwords, [-1, 2, 128])
             fake_output = self.discriminator.call(input_data=generated)
 
@@ -79,6 +83,11 @@ class TrainGAN:
 
             self.generator.summary()
             self.discriminator.summary()
+
+            current_time_str = datetime.datetime.now().strftime(format="%Y%m%d-%H%M%S")
+            # tf.saved_model.save(self.generator, './models/generator/' + current_time_str)
+            # tf.saved_model.save(self.discriminator, './models/discriminator/' + current_time_str)
+
         return gen_loss, disc_loss
 
     def train(self, dataset, epochs):
