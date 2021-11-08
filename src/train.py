@@ -34,7 +34,13 @@ class TrainGAN:
         """
         # generates a new set of random values every time:
         tf.random.set_seed(5)
-        z = tf.constant(tf.random.normal([GANConfig.NOISE_INPUT_SIZE, 1, GANConfig.OUTPUT_SEQ_LENGTH], dtype=tf.dtypes.float32))
+        z = tf.random.uniform(shape=[GANConfig.NOISE_INPUT_SIZE, 128, GANConfig.OUTPUT_SEQ_LENGTH],
+                                  minval=0, maxval=1, dtype=tf.float32)
+        # noise = np.random.normal(0, 1, (GANConfig.BACH_SIZE, GANConfig.LAYER_DIM))
+        # z = tf.constant(tf.random.normal([GANConfig.NOISE_INPUT_SIZE, 1, GANConfig.OUTPUT_SEQ_LENGTH], dtype=tf.dtypes.float32), 0, 127)
+        valid = np.ones((GANConfig.BACH_SIZE, 1))
+        fake = np.zeros((GANConfig.BACH_SIZE, 1))
+
         # z = tf.random.normal([GANConfig.NOISE_INPUT_SIZE, 1, self.generator.pass_length], 0, 1)  # noise input for generator
         #   seed = tf.random.normal([BATCH_SIZE, SEED_SIZE])
 
@@ -62,7 +68,8 @@ class TrainGAN:
                 real_output = self.discriminator.call(input_data=numpy_one_hot)
 
             generated_passwords = self.generator.call(input_noise=z)
-            generated_argmax = np.argmax(generated_passwords, axis=1)
+            generated = tf.reshape(generated_passwords, [128, 128, 10])
+            generated_argmax = np.argmax(generated, axis=-1)
             # convert generated passwords vector to password strings, then save them to a text file
             self._generated_passwords_float_vector_to_string_list(generated_passwords=generated_passwords)
 

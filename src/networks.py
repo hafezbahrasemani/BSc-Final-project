@@ -30,7 +30,7 @@ class GeneratorNetwork(tf.keras.Model):
         self.generator_res_block_model = tf.keras.models.Sequential()
 
         # first linear layer
-        self.first_linear_layer = tf.keras.layers.Dense(dim, activation='linear', input_shape=[dim*pass_length, ])
+        self.first_linear_layer = tf.keras.layers.Dense(pass_length, activation='linear', input_shape=[dim*pass_length, ])
 
         # residual blocks in a sequential order
         self.generator_res_block_model.add(ResidualBlock(dim=dim))
