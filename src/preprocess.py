@@ -19,7 +19,7 @@ class PreprocessingPipeLine:
                            )
         ds = ds.shuffle(1000, reshuffle_each_iteration=True)
         # ds = ds.apply(tf.data.experimental.unbatch())
-        ds = self.choose_passwords_of_length_10_or_less(ds)
+        ds, char2id = self.choose_passwords_of_length_10_or_less(ds)
         # ds = ds.prefetch(tf.data.experimental.AUTOTUNE)
 
         # ds = ds.shuffle(100000, reshuffle_each_iteration=True)
@@ -28,24 +28,23 @@ class PreprocessingPipeLine:
         ds = ds.batch(GANConfig.BACH_SIZE, drop_remainder=True)
 
         ds = ds.cache()
-        return ds, ds_info
+        return ds, char2id
 
     def choose_passwords_of_length_10_or_less(self, dataset):
         ds = []
+        vocabulary = set(" ")
         for data in dataset:
             try:
                 word: str = data['password'].numpy().decode("utf-8")
                 if len(word) <= 10:
                     ds.append(word.ljust(10))
+                    vocabulary |= set(word)
+
             except Exception:
                 pass
-        # def sequence_len_filter(data):
-        #     for p in data.get('password'):
-        #         if len(p.numpy().decode("utf-8")) <= 10:
-        #             return data
-        #
-        # return [sequence_len_filter(x) for x in ds]
-        return tf.data.Dataset.from_tensor_slices(ds)
+        char2id = dict((c, i) for i, c in enumerate(vocabulary))
+
+        return tf.data.Dataset.from_tensor_slices(ds), char2id
 
     def call(self):
         initial_ds, dataset_info = self.load_and_cache_dataset()

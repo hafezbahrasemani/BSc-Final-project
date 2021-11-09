@@ -3,7 +3,7 @@ from src.train import TrainGAN
 
 if __name__ == '__main__':
     pre_processing_pipeline = PreprocessingPipeLine()
-    dataset, dataset_info = pre_processing_pipeline.load_and_cache_dataset()
+    dataset, char2id = pre_processing_pipeline.load_and_cache_dataset()
 
     training = TrainGAN()
-    training.train(dataset=dataset, epochs=10)
+    training.train(dataset=dataset, char2id=char2id, epochs=10)

@@ -4,7 +4,7 @@ import datetime
 class GANConfig:
     DATASET_NAME = "rock_you"
     NOISE_INPUT_SIZE = 128  # noise input size
-    BACH_SIZE = 64
+    BACH_SIZE = 256
     EPOCHS = 199000
     LAYER_DIM = 128
     GRADIANT_PENALTY = 10

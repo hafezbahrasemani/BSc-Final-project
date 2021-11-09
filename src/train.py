@@ -22,6 +22,7 @@ class TrainGAN:
         self.generator_opt: tf.keras.optimizers.Adam = self.gan_opt.get_generator_opt()
         self.discriminator_opt: tf.keras.optimizers.Adam = self.gan_opt.get_generator_opt()
         self.vocab_size = None
+        self.char2id = None
 
     # @tf.function
     def train_step(self, passwords):
@@ -34,7 +35,7 @@ class TrainGAN:
         """
         # generates a new set of random values every time:
         tf.random.set_seed(5)
-        z = tf.random.uniform(shape=[GANConfig.NOISE_INPUT_SIZE, 128, GANConfig.OUTPUT_SEQ_LENGTH],
+        z = tf.random.uniform(shape=[GANConfig.NOISE_INPUT_SIZE, self.vocab_size, GANConfig.OUTPUT_SEQ_LENGTH],
                                   minval=0, maxval=1, dtype=tf.float32)
         # noise = np.random.normal(0, 1, (GANConfig.BACH_SIZE, GANConfig.LAYER_DIM))
         # z = tf.constant(tf.random.normal([GANConfig.NOISE_INPUT_SIZE, 1, GANConfig.OUTPUT_SEQ_LENGTH], dtype=tf.dtypes.float32), 0, 127)
@@ -54,13 +55,13 @@ class TrainGAN:
                     # if len(current_p) <= GANConfig.OUTPUT_SEQ_LENGTH:
                     #     padded_passwords.append(current_p.ljust(GANConfig.OUTPUT_SEQ_LENGTH))
                         # vocabulary |= set(current_p)  # |= is the union set operation.
-                vocabulary = [char for char in string.printable]
-                vocabulary.append('<unk>')
-                self.vocab_size = 128
-                char2id = dict((c, i) for i, c in enumerate(vocabulary))
+                # vocabulary = [char for char in string.printable]
+                # vocabulary.append('<unk>')
+                # self.vocab_size = 128
+                # char2id = dict((c, i) for i, c in enumerate(vocabulary))
 
                 # set unknown chars to <unk> character with index 100
-                encoded_passwords = [[char2id.get(c) if char2id.get(c) else 100 for c in password.decode('utf-8')] for password in passwords.numpy()]
+                encoded_passwords = [[self.char2id.get(c) for c in password.decode('utf-8')] for password in passwords.numpy()]
                 one_hot_encoded = [tf.constant(to_categorical(p, num_classes=self.vocab_size)) for p in encoded_passwords]
                 numpy_one_hot = np.array(one_hot_encoded)
 
@@ -68,10 +69,10 @@ class TrainGAN:
                 real_output = self.discriminator.call(input_data=numpy_one_hot)
 
             generated_passwords = self.generator.call(input_noise=z)
-            generated = tf.reshape(generated_passwords, [128, 128, 10])
+            generated = tf.reshape(generated_passwords, [128, 10, self.vocab_size])
             generated_argmax = np.argmax(generated, axis=-1)
             # convert generated passwords vector to password strings, then save them to a text file
-            self._generated_passwords_float_vector_to_string_list(generated_passwords=generated_passwords)
+            self.save_generated_passwords(generated_argmax)
 
             generated = tf.reshape(generated_passwords, [-1, 2, 128])
             fake_output = self.discriminator.call(input_data=generated)
@@ -97,7 +98,7 @@ class TrainGAN:
 
         return gen_loss, disc_loss
 
-    def train(self, dataset, epochs):
+    def train(self, dataset, char2id, epochs):
         self.generator.build(input_shape=[])
         self.discriminator.build(input_shape=[])
         # fixed_seed = tf.random.normal(0, 1, (1, 32), dtype=tf.dtypes.float32)  # noise input for generator
@@ -105,6 +106,8 @@ class TrainGAN:
 
         start = time.time()
         vocabulary = self._get_vocabulary()
+        self.char2id = char2id
+        self.vocab_size = len(char2id)
 
         # def generate_samples():
         #     samples = session.run(fake_inputs)
@@ -145,16 +148,24 @@ class TrainGAN:
         return "{}:{:>02}:{:>05.2f}".format(h, m, s)
 
     def _get_vocabulary(self):
-        vocabulary = [char for char in string.printable]
-        vocabulary.append('<unk>')
-        char2id = dict((c, i) for i, c in enumerate(vocabulary))
-        return char2id
+        # vocabulary = [char for char in string.printable]
+        # vocabulary.append('<unk>')
+        # char2id = dict((c, i) for i, c in enumerate(vocabulary))
+        return self.char2id
 
-    def _generated_passwords_float_vector_to_string_list(self, generated_passwords):
-        pass
+    def _convert_password_float_vector_to_string(self, generated_password_vector):
+        char2id = self.char2id
+        id2char = {}
+        for key, val in char2id.items():
+            id2char[val] = key
+        password = ''
+        for char_id in generated_password_vector:
+            password += str(id2char.get(char_id) if id2char.get(char_id) else " ")
+        return password
 
-    def save_generated_passwords(self, epoch, seed):
-            pass
+    def save_generated_passwords(self, passwords):
+        for password in passwords:
+            print(self._convert_password_float_vector_to_string(password))
 
     def preprocess_dataset(self, max_features):
         vectorized_layer = TextVectorization(
