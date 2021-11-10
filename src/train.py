@@ -25,7 +25,7 @@ class TrainGAN:
         self.char2id = None
 
     # @tf.function
-    def train_step(self, passwords):
+    def train_step(self, passwords, epoch):
         """
         this would be called on each iteration
             > Here we use tensorflow GradiantTape to record operations for differentiation for each epoch.
@@ -71,10 +71,12 @@ class TrainGAN:
             generated_passwords = self.generator.call(input_noise=z)
             generated = tf.reshape(generated_passwords, [128, 10, self.vocab_size])
             generated_argmax = np.argmax(generated, axis=-1)
-            # convert generated passwords vector to password strings, then save them to a text file
-            self.save_generated_passwords(generated_argmax)
 
-            generated = tf.reshape(generated_passwords, [-1, 2, 128])
+            # convert generated passwords vector to password strings, then save them to a text file
+            current_time_str = datetime.datetime.now().strftime(format="%Y%m%d-%H%M%S")
+            self.save_generated_passwords(generated_argmax, f"generated-password_epoch-{str(epoch)}_{current_time_str}")
+
+            generated = tf.reshape(generated_passwords, [128, 10, self.vocab_size])
             fake_output = self.discriminator.call(input_data=generated)
 
             gen_loss = self.gan_loss.generator_loss(fake_output)
@@ -92,7 +94,6 @@ class TrainGAN:
             self.generator.summary()
             self.discriminator.summary()
 
-            current_time_str = datetime.datetime.now().strftime(format="%Y%m%d-%H%M%S")
             # tf.saved_model.save(self.generator, './models/generator/' + current_time_str)
             # tf.saved_model.save(self.discriminator, './models/discriminator/' + current_time_str)
 
@@ -127,7 +128,7 @@ class TrainGAN:
             disc_loss_list = []
 
             for batch in dataset:
-                t = self.train_step(batch)
+                t = self.train_step(batch, epoch)
                 gen_loss_list.append(t[0])
                 disc_loss_list.append(t[1])
 
@@ -163,9 +164,13 @@ class TrainGAN:
             password += str(id2char.get(char_id) if id2char.get(char_id) else " ")
         return password
 
-    def save_generated_passwords(self, passwords):
+    def save_generated_passwords(self, passwords, file_name):
+        file = open(f'{file_name}.txt', 'w')
         for password in passwords:
-            print(self._convert_password_float_vector_to_string(password))
+            word = self._convert_password_float_vector_to_string(password)
+            file.write(word)
+            file.write("\n")
+        file.close()
 
     def preprocess_dataset(self, max_features):
         vectorized_layer = TextVectorization(
