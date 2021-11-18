@@ -15,8 +15,7 @@ class PreprocessingPipeLine:
                                     split=f'train[:{GANConfig.INITIAL_TRAIN_SIZE}]', with_info=True)
         else:
             ds, ds_info = tfds.load(name=GANConfig.DATASET_NAME,
-                                    split='train[:2500000]'
-                           )
+                                    split='train[:1000000]', with_info=True)
         ds = ds.shuffle(1000, reshuffle_each_iteration=True)
         # ds = ds.apply(tf.data.experimental.unbatch())
         ds, char2id = self.choose_passwords_of_length_10_or_less(ds)

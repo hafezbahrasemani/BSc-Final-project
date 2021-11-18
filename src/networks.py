@@ -66,13 +66,13 @@ class GeneratorNetwork(tf.keras.Model):
         output = self.generator_res_block_model(output)
         # output = tf.reshape(output, (1, 32, 8))
 
-        # feed resulted data to convolutional layer
+        # feed resulted data to convolution layer
         output = self.conv_1d_layer(output)
 
         # transpose operation on the resulted output
         output = tf.transpose(output)
 
-        # feed softmax layer with transposed output
+        # feed soft-max layer with transposed output
         output = self.softmax_layer(output)
         # output = tf.reshape(output, [2, 1, 32])
 

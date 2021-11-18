@@ -6,4 +6,4 @@ if __name__ == '__main__':
     dataset, char2id = pre_processing_pipeline.load_and_cache_dataset()
 
     training = TrainGAN()
-    training.train(dataset=dataset, char2id=char2id, epochs=10)
+    training.train(dataset=dataset, char2id=char2id, epochs=50)

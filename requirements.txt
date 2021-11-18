@@ -1,5 +1,5 @@
 tensorflow==2.6.0
 tensorflow-datasets==4.4.0
 numpy==1.19.2 
-tensorflow_hub==0.12.0
 scikit-learn==1.0.1
+zxcvbn==4.4.28

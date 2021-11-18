@@ -6,3 +6,6 @@ assets
 models
 
 generated-*.txt
+generated
+losses
+probabilities

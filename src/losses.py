@@ -14,4 +14,3 @@ class GANLoss:
 
     def generator_loss(self, fake_output):
         return self.cross_entropy(tf.ones_like(fake_output), fake_output)
-
