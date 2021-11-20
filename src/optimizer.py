@@ -10,7 +10,7 @@ class GANOpt:
         pass
 
     def get_generator_opt(self):
-        return tf.keras.optimizers.Adam(1e-4, beta_1=GANConfig.BETA_1, beta_2=GANConfig.BETA_2)
+        return tf.keras.optimizers.Adam(GANConfig.LEARNING_RATE, beta_1=GANConfig.BETA_1, beta_2=GANConfig.BETA_2)
 
     def get_discriminator(self):
-        return tf.keras.optimizers.Adam(1e-4, beta_1=GANConfig.BETA_1, beta_2=GANConfig.BETA_2)
+        return tf.keras.optimizers.Adam(GANConfig.LEARNING_RATE, beta_1=GANConfig.BETA_1, beta_2=GANConfig.BETA_2)

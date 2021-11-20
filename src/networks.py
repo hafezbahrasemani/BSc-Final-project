@@ -9,9 +9,9 @@ class ResidualBlock(tf.keras.Model):
         super().__init__()
         self.res_block = tf.keras.Sequential([
             tf.keras.layers.ReLU(True),
-            tf.keras.layers.Conv1D(dim, dim, 5, padding='same'),
+            tf.keras.layers.Conv1D(dim, 2, 1, padding='same'),
             tf.keras.layers.ReLU(True),
-            tf.keras.layers.Conv1D(dim, dim, 5, padding='same'),
+            tf.keras.layers.Conv1D(dim, 2, 1, padding='same'),
         ])
 
     def call(self, input_data, **kwargs):
@@ -64,7 +64,6 @@ class GeneratorNetwork(tf.keras.Model):
 
         # feed residual blocks by output from reshape stage
         output = self.generator_res_block_model(output)
-        # output = tf.reshape(output, (1, 32, 8))
 
         # feed resulted data to convolution layer
         output = self.conv_1d_layer(output)
@@ -74,7 +73,6 @@ class GeneratorNetwork(tf.keras.Model):
 
         # feed soft-max layer with transposed output
         output = self.softmax_layer(output)
-        # output = tf.reshape(output, [2, 1, 32])
 
         return output
 
