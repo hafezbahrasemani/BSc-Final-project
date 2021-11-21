@@ -1,3 +1,5 @@
+import pickle
+
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
@@ -20,6 +22,8 @@ class PreprocessingPipeLine:
         ds, char2id = self.choose_passwords_of_length_10_or_less(ds)
         ds = ds.batch(GANConfig.BACH_SIZE, drop_remainder=True)
         ds = ds.cache()
+
+        self.save_charset_to_memory(charset=char2id)
         return ds, char2id
 
     def choose_passwords_of_length_10_or_less(self, dataset):
@@ -37,3 +41,8 @@ class PreprocessingPipeLine:
         char2id = dict((c, i) for i, c in enumerate(vocabulary))
 
         return tf.data.Dataset.from_tensor_slices(ds), char2id
+
+    def save_charset_to_memory(self, charset):
+        with open('charset.pickle', 'wb') as f:
+            # Pickle the 'data' dictionary using the highest protocol available.
+            pickle.dump(charset, f, pickle.HIGHEST_PROTOCOL)

@@ -1,4 +1,5 @@
 import tensorflow as tf
+from python_utils import time
 
 
 class ResidualBlock(tf.keras.Model):
@@ -35,9 +36,9 @@ class GeneratorNetwork(tf.keras.Model):
         # residual blocks in a sequential order
         self.generator_res_block_model.add(ResidualBlock(dim=dim))
         self.generator_res_block_model.add(ResidualBlock(dim=dim))
-        self.generator_res_block_model.add(ResidualBlock(dim=dim))
-        self.generator_res_block_model.add(ResidualBlock(dim=dim))
-        self.generator_res_block_model.add(ResidualBlock(dim=dim))
+        # self.generator_res_block_model.add(ResidualBlock(dim=dim))
+        # self.generator_res_block_model.add(ResidualBlock(dim=dim))
+        # self.generator_res_block_model.add(ResidualBlock(dim=dim))
 
         # convolutional 1D layer
         """
@@ -55,7 +56,6 @@ class GeneratorNetwork(tf.keras.Model):
         :param kwargs:
         :return: the generated passwords for an iteration
         """
-
         # feed first layer with noise data
         output = self.first_linear_layer(input_noise)
 
@@ -86,9 +86,9 @@ class DiscriminatorNetwork(tf.keras.Model):
         self.block = tf.keras.Sequential([
             ResidualBlock(dim=dim),
             ResidualBlock(dim=dim),
-            ResidualBlock(dim=dim),
-            ResidualBlock(dim=dim),
-            ResidualBlock(dim=dim),
+            # ResidualBlock(dim=dim),
+            # ResidualBlock(dim=dim),
+            # ResidualBlock(dim=dim),
         ])
         self.conv1d = tf.keras.layers.Conv1D(dim, 1, padding='valid')
         self.linear = tf.keras.layers.Dense(dim, activation='linear', input_shape=(dim*pass_length, ))

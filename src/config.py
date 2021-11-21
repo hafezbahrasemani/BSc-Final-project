@@ -20,6 +20,7 @@ class GANConfig:
     BETA_2 = 0.9
 
     # Directories
-    LOSSES_DIR = "./losses"
-    GENERATED_DIR = "./generated"
-    PROBABILITY_DIR = "./probabilities"
+    LOSSES_DIR = "/home/hafez/AUT-Workspace/BSc-Final-project/losses"
+    GENERATED_DIR = "/home/hafez/AUT-Workspace/BSc-Final-project/generated"
+    PROBABILITY_DIR = "/home/hafez/AUT-Workspace/BSc-Final-project/probabilities"
+    CHARSET_DIR = "/home/hafez/AUT-Workspace/BSc-Final-project"
